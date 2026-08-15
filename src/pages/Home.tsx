@@ -388,6 +388,11 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            {report.sources && (
+              <p className="text-[11px] text-[#a39e8f] mt-2.5 leading-relaxed">
+                数据来源：{Object.entries(report.sources).map(([k, v]) => `${k}（${v}）`).join("；")}
+              </p>
+            )}
           </section>
 
           {/* 02 走向概率判断 */}

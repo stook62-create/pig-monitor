@@ -78,6 +78,7 @@ export interface Report {
   }
   position_zones: PositionZone[]
   next_watch: WatchItem[]
+  sources?: Record<string, string>
 }
 
 export interface MonitorState {

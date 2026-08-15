@@ -17,7 +17,9 @@
 """
 
 import json
+import re
 import sys
+import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 
@@ -58,36 +60,85 @@ def save_settings(s: dict):
     SETTINGS_FILE.write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-# ---------- 1. 数据快照 ----------
-def collect_snapshot() -> dict:
-    """拉取最新行业数据。
+# ---------- 1. 数据采集 ----------
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-    【数据源接入点】当前为人工整理的研究数据（截至 2026-08-14）。
-    接入真实数据源（行情/行业数据 API）时，只需改写此函数内部，
-    返回字段保持不变即可。
+
+def _http_get(url: str, encoding: str = "utf-8", timeout: int = 10) -> str:
+    req = urllib.request.Request(url, headers=UA)
+    raw = urllib.request.urlopen(req, timeout=timeout).read()
+    return raw.decode(encoding, errors="ignore")
+
+
+def fetch_muyuan_close() -> float:
+    """腾讯行情接口拉取牧原最新价（GBK编码，~分隔）。"""
+    txt = _http_get("https://qt.gtimg.cn/q=sz002714", encoding="gbk")
+    m = re.search(r'="([^"]+)"', txt)
+    price = float(m.group(1).split("~")[3])
+    if not (5 < price < 500):
+        raise ValueError(f"股价异常: {price}")
+    return price
+
+
+def fetch_pig_price_spot() -> tuple:
+    """抓取搜猪网生猪日报列表页标题中的全国瘦肉型出栏均价（按日期倒序，取最新一期）。"""
+    html = _http_get("https://www.soozhu.com/article/")
+    items = re.findall(r'href="(/article/\d+/)"[^>]*>([^<]*生猪日报[^<]*)</a>', html)
+    for _link, title in items:
+        m = re.search(r"(\d+)月(\d+)日生猪日报：今日全国瘦肉型猪出栏均价([\d.]+)元/公斤", title)
+        if m:
+            month, day, price = int(m.group(1)), int(m.group(2)), float(m.group(3))
+            if 5 <= price <= 30:
+                return price, f"{month}月{day}日"
+    raise ValueError("未找到生猪日报标题")
+
+
+# 人工维护的基准值（月度/研究性数据；自动采集失败的字段也回退到这里）
+MANUAL_BASELINE = {
+    "pig_price": 10.62,            # 搜猪网瘦肉型出栏均价（2026-08-14，自动采集会覆盖）
+    "pig_price_low": 9.5,          # 本轮低点（2026年3-4月）
+    "muyuan_june_avg_price": 9.69, # 牧原6月销售均价
+    "piglet_trend": "low",         # 仔猪：农业农村部8月第1周均价22.42元/公斤，环比-2.5%，29省全部下跌（7月异动已逆转）
+    "frozen_stock": "high",        # 冻品库存：high/normal/low
+    "sow_stock": 3780,             # 能繁母猪存栏（万头，2026Q2末，月度数据）
+    "sow_mom": -1.33,              # 最新月环比（%，2026年6月）
+    "sow_mom_prev": -1.13,         # 上月环比（%，2026年5月）
+    "muyuan_cost": MUYUAN_FULL_COST,
+    "muyuan_q2_profit": -50,       # Q2单季预亏中枢（亿元，-45~-55）
+    "industry_loss_per_head": 213, # 自繁自养头均亏损（元，2026-08-03钢联数据）
+    "muyuan_close": 39.29,         # 2026-08-14收盘（自动采集会覆盖）
+    "muyuan_year_low": 31.81,
+    "muyuan_year_high": 51.29,
+    "policy_supportive": True,     # 保有量下调+备案制
+}
+
+
+def collect_snapshot() -> dict:
+    """采集最新数据快照：能自动拉取的自动拉取，失败回退到人工基准值。
+
+    自动源：牧原股价（腾讯行情）、生猪现货价（搜猪网日报标题）。
+    人工维护：母猪存栏/环比（月度官方数据）、仔猪动向、冻品库存、成本、单季利润、政策。
     """
-    return {
-        # 价格
-        "pig_price": 10.5,             # 全国生猪均价（元/公斤，近期磨底区间）
-        "pig_price_low": 9.5,          # 本轮低点（2026年3-4月）
-        "muyuan_june_avg_price": 9.69, # 牧原6月销售均价
-        "piglet_trend": "surge",       # 仔猪价格动向：surge/slow_up/flat/low
-        "frozen_stock": "high",        # 冻品库存：high/normal/low
-        # 产能
-        "sow_stock": 3780,             # 能繁母猪存栏（万头，2026Q2末）
-        "sow_mom": -1.33,              # 最新月环比（%，2026年6月）
-        "sow_mom_prev": -1.13,         # 上月环比（%，2026年5月）
-        # 成本与盈利
-        "muyuan_cost": MUYUAN_FULL_COST,
-        "muyuan_q2_profit": -50,       # Q2单季预亏中枢（亿元，-45~-55）
-        "industry_loss_per_head": 300, # 自繁自养头均亏损（元）
-        # 市场
-        "muyuan_close": 40.15,         # 8月13日收盘（元）
-        "muyuan_year_low": 31.81,
-        "muyuan_year_high": 51.29,
-        # 政策
-        "policy_supportive": True,     # 保有量下调+备案制
-    }
+    snap = dict(MANUAL_BASELINE)
+    sources = {}
+
+    try:
+        snap["muyuan_close"] = fetch_muyuan_close()
+        sources["牧原股价"] = f"自动·腾讯行情（{snap['muyuan_close']:.2f}元）"
+    except Exception as e:
+        sources["牧原股价"] = f"人工基准（自动失败：{e}）"
+
+    try:
+        price, day = fetch_pig_price_spot()
+        snap["pig_price"] = price
+        sources["生猪均价"] = f"自动·搜猪网日报（{day}：{price}元/公斤）"
+    except Exception as e:
+        sources["生猪均价"] = f"人工基准（自动失败：{e}）"
+
+    sources["母猪存栏"] = "人工·月度官方数据"
+    sources["仔猪/库存/成本/利润"] = "人工·研究底稿"
+    snap["_sources"] = sources
+    return snap
 
 
 # ---------- 2. 指标引擎 ----------
@@ -230,17 +281,17 @@ def build_signals() -> dict:
     return {
         "positive": [
             "能繁母猪去化加速：4月-0.71% → 5月-1.13% → 6月-1.33%，降幅逐月扩大",
+            "仔猪警报解除：8月第1周仔猪均价22.42元/公斤、环比-2.5%，29省全部下跌——7月的补栏异动已逆转",
             "政策双轮驱动：保有量下调至3750万头 + 大型集团生产备案制",
             "牧原现金流修复：H股募资净额118.65亿港元到账，高管增持4-5亿+H股回购",
-            "成本护城河仍在加深：完全成本11.6元 vs 行业13元+，现金成本仅10.2-10.3元",
         ],
         "watch": [
-            "仔猪价格7月快速上涨——补栏情绪回暖，是去化中断的前兆信号",
+            "8月出栏计划环比普增（卓创+6.24%、钢联+3.74%）——供给压力未减，反弹高度受限",
             "冻品库存偏高，将持续压制鲜品价格反弹高度",
             "PSY效率革命（行业24头+、牧原29-32头）正在吞噬数量去化的成果",
         ],
         "risk": [
-            "若猪价反弹至成本线以上，补栏积极性回归，去化可能停滞（温氏已明确提示）",
+            "立秋后猪价小幅反弹（10.2→10.6元），若回到成本线附近，补栏情绪可能复燃、去化停滞",
             "Q3财报若亏损超预期，股价可能二次探底",
         ],
     }
@@ -341,6 +392,7 @@ def build_report(snapshot: dict, settings: dict, as_of: str, version: str) -> di
         "signals": build_signals(),
         "position_zones": build_position_zones(snapshot, cost),
         "next_watch": build_next_watch(),
+        "sources": snapshot.get("_sources", {}),
     }
 
 
