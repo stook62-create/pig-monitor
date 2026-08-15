@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
-import bundledState from "@/data/state.json"
+import bundledJson from "@/data/state.json"
 import type { MonitorState, Report, FactorStatus } from "@/types/report"
+import { buildReport, todayStr, type Snapshot } from "@/lib/engine"
+import { loadLocal, saveLocal, mergeState, toLocal, clearLocal } from "@/lib/store"
+import DataEntryModal from "@/components/DataEntryModal"
+
+const bundled = bundledJson as MonitorState
 
 const STATUS_STYLE: Record<FactorStatus, { label: string; dot: string; chip: string }> = {
   positive: { label: "正向", dot: "bg-[#b3402a]", chip: "bg-[#fbeae5] text-[#b3402a] border-[#ecc9c0]" },
@@ -16,6 +21,11 @@ const SCENARIO_COLOR: Record<string, string> = {
 }
 
 type Selection = "current" | number
+
+function nowHM(): string {
+  const d = new Date()
+  return `${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`
+}
 
 function SectionTitle({ no, title, sub }: { no: string; title: string; sub?: string }) {
   return (
@@ -39,13 +49,14 @@ function DeltaBadge({ cur, prev }: { cur: number; prev?: number }) {
 }
 
 export default function Home() {
-  const [state, setState] = useState<MonitorState>(bundledState as MonitorState)
+  const [state, setState] = useState<MonitorState>(() => mergeState(bundled, loadLocal()))
   const [apiOnline, setApiOnline] = useState(false)
   const [selected, setSelected] = useState<Selection>("current")
   const [busy, setBusy] = useState<"refresh" | "save" | "cost" | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [editingCost, setEditingCost] = useState(false)
   const [costInput, setCostInput] = useState("")
+  const [showEntry, setShowEntry] = useState(false)
 
   // 版本列表：新→旧
   const versions = useMemo(() => state.versions.slice().reverse(), [state.versions])
@@ -60,6 +71,12 @@ export default function Home() {
     prevReport?.scenarios.forEach((s) => m.set(s.key, s.prob))
     return m
   }, [prevReport])
+
+  // 离线模式下持久化到浏览器
+  function persist(next: MonitorState) {
+    setState(next)
+    saveLocal(toLocal(next, bundled))
+  }
 
   useEffect(() => {
     fetch("/api/state")
@@ -93,34 +110,76 @@ export default function Home() {
       }
       flash(`操作失败：${d?.error ?? "未知错误"}`)
     } catch {
-      flash("无法连接本地监测服务（需通过 npm run dev 启动）")
+      flash("无法连接本地监测服务")
     } finally {
       setBusy(null)
     }
     return null
   }
 
+  // 刷新：在线走本地服务；离线打开数据录入面板
   async function onRefresh() {
-    const log = await callApi("/api/refresh", undefined, "refresh")
-    if (log) flash("已拉取最新数据并重建当前报告（未存档）")
+    if (apiOnline) {
+      const log = await callApi("/api/refresh", undefined, "refresh")
+      if (log) flash("已拉取最新数据并重建当前报告（未存档）")
+    } else {
+      setShowEntry(true)
+    }
   }
 
+  function onApplySnapshot(snap: Snapshot) {
+    const asOf = todayStr()
+    const rebuilt = buildReport(snap, state.settings.position_cost, asOf, `R${asOf.replaceAll("-", "")}`)
+    persist({ ...state, current: rebuilt })
+    setSelected("current")
+    setShowEntry(false)
+    flash("监测引擎已用新数据重建当前快照（未存档）")
+  }
+
+  // 保存版本：在线走本地服务；离线存档到浏览器
   async function onSave() {
-    const log = await callApi("/api/save-version", undefined, "save")
-    if (log) flash(log.replace(/^✓\s*/, ""))
+    if (apiOnline) {
+      const log = await callApi("/api/save-version", undefined, "save")
+      if (log) flash(log.replace(/^✓\s*/, ""))
+      return
+    }
+    if (!state.current) return
+    const date = todayStr()
+    let version = `R${date.replaceAll("-", "")}`
+    const existing = new Set(state.versions.map((v) => v.version))
+    if (existing.has(version)) version = `${version}-${nowHM()}`
+    const archived: Report = { ...state.current, as_of: date, version }
+    persist({ ...state, versions: [...state.versions, archived] })
+    flash(`已存档版本 ${version}（保存在本浏览器）`)
   }
 
+  // 修改成本：在线走本地服务；离线用前端引擎重建
   async function onCostSubmit() {
     const v = Number(costInput)
     setEditingCost(false)
     if (!Number.isFinite(v) || v <= 0 || v === state.settings.position_cost) return
-    const log = await callApi("/api/settings", { position_cost: v }, "cost")
-    if (log) flash(`持仓成本已修正为 ${v.toFixed(2)} 元，市值参照已联动调整`)
+    if (apiOnline) {
+      const log = await callApi("/api/settings", { position_cost: v }, "cost")
+      if (log) flash(`持仓成本已修正为 ${v.toFixed(2)} 元，市值参照已联动调整`)
+      return
+    }
+    if (!state.current) return
+    const rebuilt = buildReport(state.current.snapshot as Snapshot, v, state.current.as_of, state.current.version)
+    persist({ settings: { position_cost: v }, current: rebuilt, versions: state.versions })
+    flash(`持仓成本已修正为 ${v.toFixed(2)} 元，市值参照已联动调整`)
+  }
+
+  function onReset() {
+    clearLocal()
+    setState(bundled)
+    setSelected("current")
+    flash("已恢复为网站打包时的初始数据")
   }
 
   if (!report) return null
   const isCurrent = selected === "current"
   const cost = report.position_cost
+  const hasLocal = !!loadLocal()
 
   return (
     <div className="min-h-screen bg-[#f6f2ea] text-[#1c1917] antialiased">
@@ -149,42 +208,31 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => {
-                  if (!apiOnline) return
                   setCostInput(state.settings.position_cost.toFixed(2))
                   setEditingCost(true)
                 }}
-                title={apiOnline ? "点击修正持仓成本" : "需本地服务运行时才能修改"}
-                className={`rounded-full border border-[#d8cfba] bg-white px-3 py-1 transition-colors ${
-                  apiOnline ? "hover:border-[#b3402a] cursor-pointer" : "opacity-70 cursor-not-allowed"
-                }`}
+                title="点击修正持仓成本，市值参照联动调整"
+                className="rounded-full border border-[#d8cfba] bg-white px-3 py-1 hover:border-[#b3402a] transition-colors"
               >
                 持仓成本 <b className="text-[#b3402a]">{state.settings.position_cost.toFixed(2)} 元</b>
-                {apiOnline && <span className="ml-1 text-[#b3402a]">✎</span>}
+                <span className="ml-1 text-[#b3402a]">✎</span>
               </button>
             )}
             {/* 刷新数据 */}
             <button
               onClick={onRefresh}
-              disabled={!apiOnline || busy !== null}
-              title={apiOnline ? "拉取最新行业数据因子并重建报告" : "需本地服务运行时才能刷新"}
-              className={`rounded-full px-3.5 py-1 font-semibold transition-colors ${
-                apiOnline
-                  ? "bg-[#1c1917] text-[#faf7f0] hover:bg-[#b3402a]"
-                  : "bg-[#d8d2c0] text-[#8a8578] cursor-not-allowed"
-              }`}
+              disabled={busy !== null}
+              title={apiOnline ? "通过本地服务拉取最新数据" : "手动录入最新行业数据，引擎自动重建报告"}
+              className="rounded-full px-3.5 py-1 font-semibold bg-[#1c1917] text-[#faf7f0] hover:bg-[#b3402a] transition-colors"
             >
-              {busy === "refresh" ? "刷新中…" : "⟳ 刷新数据"}
+              {busy === "refresh" ? "刷新中…" : apiOnline ? "⟳ 刷新数据" : "⟳ 录入数据"}
             </button>
             {/* 保存版本 */}
             <button
               onClick={onSave}
-              disabled={!apiOnline || busy !== null}
-              title={apiOnline ? "把当前报告存档为一个历史版本" : "需本地服务运行时才能存档"}
-              className={`rounded-full px-3.5 py-1 font-semibold border transition-colors ${
-                apiOnline
-                  ? "border-[#1c1917] text-[#1c1917] hover:bg-[#1c1917] hover:text-[#faf7f0]"
-                  : "border-[#d8d2c0] text-[#8a8578] cursor-not-allowed"
-              }`}
+              disabled={busy !== null}
+              title={apiOnline ? "存档到项目 reports/ 目录" : "存档到本浏览器（localStorage）"}
+              className="rounded-full px-3.5 py-1 font-semibold border border-[#1c1917] text-[#1c1917] hover:bg-[#1c1917] hover:text-[#faf7f0] transition-colors"
             >
               {busy === "save" ? "存档中…" : "⬇ 保存版本"}
             </button>
@@ -193,7 +241,9 @@ export default function Home() {
         {/* 状态条 */}
         <div className="mx-auto max-w-6xl px-4 pb-2.5 flex flex-wrap gap-x-4 text-[11px] text-[#8a8578]">
           <span>
-            {apiOnline ? "● 本地监测服务已连接" : "○ 静态模式（按钮不可用，需 npm run dev 启动本地服务）"}
+            {apiOnline
+              ? "● 本地监测服务已连接（存档写入项目 reports/ 目录）"
+              : "○ 静态模式 · 引擎在浏览器内运行，改动与存档保存在本浏览器"}
           </span>
           {state.current?.refreshed_at && <span>最近刷新：{state.current.refreshed_at}</span>}
           {toast && <span className="text-[#b3402a] font-semibold">{toast}</span>}
@@ -248,8 +298,16 @@ export default function Home() {
               ))}
             </ul>
             <p className="text-[11px] leading-relaxed text-[#8a8578] mt-3 px-1">
-              刷新数据只更新当前快照；点击「保存版本」才会把快照存档为历史版本，永不覆盖。
+              刷新/录入只更新当前快照；点击「保存版本」才会存档为历史版本，永不覆盖。
             </p>
+            {!apiOnline && hasLocal && (
+              <button
+                onClick={onReset}
+                className="mt-2 w-full text-[11px] text-[#8a8578] hover:text-[#b3402a] border border-dashed border-[#d8cfba] rounded px-2 py-1.5 transition-colors"
+              >
+                恢复初始数据（清除本浏览器的改动）
+              </button>
+            )}
           </div>
         </aside>
 
@@ -501,12 +559,21 @@ export default function Home() {
           </section>
 
           <footer className="text-[11px] text-[#a39e8f] leading-relaxed border-t border-[#e0d8c4] pt-4 pb-8">
-            手动触发模式：「刷新数据」调用 monitor.py --refresh 重建当前快照；「保存版本」调用 --save 存档历史版本；
-            持仓成本修改后全站市值参照联动重算。数据源接入点为 monitor.py 的 collect_snapshot()（当前为人工整理的研究数据）。
+            手动触发模式：本地运行时「刷新数据」调用 monitor.py；线上静态模式下监测引擎直接在浏览器内运行，
+            可手动录入数据、修正成本、保存版本（保存在本浏览器 localStorage，换设备/清缓存后重置）。
             仅供研究跟踪使用，不构成投资建议。
           </footer>
         </main>
       </div>
+
+      {/* 数据录入面板（静态模式） */}
+      {showEntry && state.current && (
+        <DataEntryModal
+          initial={state.current.snapshot as Snapshot}
+          onApply={onApplySnapshot}
+          onClose={() => setShowEntry(false)}
+        />
+      )}
     </div>
   )
 }
