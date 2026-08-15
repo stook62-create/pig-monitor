@@ -59,3 +59,37 @@ export function toLocal(state: MonitorState, bundled: MonitorState): LocalState 
     localVersions: state.versions.filter((v) => !seen.has(`${v.as_of}|${v.version}`)),
   }
 }
+
+/** 导出当前完整状态（设置 + 当前快照 + 全部版本）为 JSON 文件下载 */
+export function exportState(state: MonitorState) {
+  const payload = {
+    exported_at: new Date().toISOString(),
+    settings: state.settings,
+    current: state.current,
+    versions: state.versions,
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `pig-monitor-export-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** 解析导入的 JSON 文件（校验基本结构），失败返回 null */
+export function parseImport(text: string): MonitorState | null {
+  try {
+    const d = JSON.parse(text)
+    if (!d || typeof d !== "object") return null
+    if (!d.settings || typeof d.settings.position_cost !== "number") return null
+    if (!Array.isArray(d.versions)) return null
+    return {
+      settings: { position_cost: d.settings.position_cost },
+      current: d.current ?? null,
+      versions: d.versions,
+    }
+  } catch {
+    return null
+  }
+}

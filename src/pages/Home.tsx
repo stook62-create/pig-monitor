@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import bundledJson from "@/data/state.json"
 import type { MonitorState, Report, FactorStatus } from "@/types/report"
 import { buildReport, todayStr, type Snapshot } from "@/lib/engine"
-import { loadLocal, saveLocal, mergeState, toLocal, clearLocal } from "@/lib/store"
+import { loadLocal, saveLocal, mergeState, toLocal, clearLocal, exportState, parseImport } from "@/lib/store"
 import DataEntryModal from "@/components/DataEntryModal"
 
 const bundled = bundledJson as MonitorState
@@ -176,6 +176,33 @@ export default function Home() {
     flash("已恢复为网站打包时的初始数据")
   }
 
+  // 导出/导入：浏览器存档的迁移与备份
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function onExport() {
+    exportState(state)
+    flash("已导出 JSON 文件，发给我即可提交进仓库永久存档")
+  }
+
+  async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    const imported = parseImport(await f.text())
+    if (!imported) {
+      flash("导入失败：文件格式不正确")
+      return
+    }
+    const seen = new Set(state.versions.map((v) => `${v.as_of}|${v.version}`))
+    const newOnes = imported.versions.filter((v) => !seen.has(`${v.as_of}|${v.version}`))
+    persist({
+      settings: imported.settings,
+      current: imported.current ?? state.current,
+      versions: [...state.versions, ...newOnes],
+    })
+    flash(`已导入 ${newOnes.length} 个新版本`)
+    e.target.value = ""
+  }
+
   if (!report) return null
   const isCurrent = selected === "current"
   const cost = report.position_cost
@@ -300,6 +327,29 @@ export default function Home() {
             <p className="text-[11px] leading-relaxed text-[#8a8578] mt-3 px-1">
               刷新/录入只更新当前快照；点击「保存版本」才会存档为历史版本，永不覆盖。
             </p>
+            <div className="flex gap-1.5 mt-2">
+              <button
+                onClick={onExport}
+                title="把当前数据与全部版本导出为 JSON 文件"
+                className="flex-1 text-[11px] text-[#6b675c] hover:text-[#b3402a] border border-[#d8cfba] rounded px-2 py-1.5 transition-colors"
+              >
+                ⇩ 导出版本
+              </button>
+              <button
+                onClick={() => fileRef.current?.click()}
+                title="从 JSON 文件导入版本（换设备恢复）"
+                className="flex-1 text-[11px] text-[#6b675c] hover:text-[#b3402a] border border-[#d8cfba] rounded px-2 py-1.5 transition-colors"
+              >
+                ⇧ 导入版本
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={onImportFile}
+              />
+            </div>
             {!apiOnline && hasLocal && (
               <button
                 onClick={onReset}
