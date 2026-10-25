@@ -26,7 +26,13 @@ function NumField({ label, value, onChange, step = "0.01" }: {
 }
 
 export default function DataEntryModal({ initial, onApply, onClose }: Props) {
-  const [s, setS] = useState<Snapshot>({ ...initial })
+  const [s, setS] = useState<Snapshot>({
+    ...initial,
+    pig_wow: initial.pig_wow ?? 0,
+    piglet_price: initial.piglet_price ?? 0,
+    piglet_wow: initial.piglet_wow ?? 0,
+    price_date: initial.price_date ?? new Date().toISOString().slice(0, 10),
+  })
   const set = <K extends keyof Snapshot>(k: K, v: Snapshot[K]) => setS((p) => ({ ...p, [k]: v }))
 
   return (
@@ -44,22 +50,20 @@ export default function DataEntryModal({ initial, onApply, onClose }: Props) {
             填入你查到的最新数据，提交后监测引擎会自动重跑指标判定、概率规则和市值参照，重建当前快照。
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <NumField label="生猪均价（元/公斤）" value={s.pig_price} onChange={(v) => set("pig_price", v)} />
+            <NumField label="生猪周均价（元/公斤）" value={s.pig_price} onChange={(v) => set("pig_price", v)} />
+            <NumField label="生猪周环比（%）" value={s.pig_wow} onChange={(v) => set("pig_wow", v)} />
+            <NumField label="仔猪周均价（元/公斤）" value={s.piglet_price} onChange={(v) => set("piglet_price", v)} />
+            <NumField label="仔猪周环比（%）" value={s.piglet_wow} onChange={(v) => set("piglet_wow", v)} />
+            <label className="block col-span-2">
+              <span className="text-xs text-[#6b675c]">周度价格采集日期</span>
+              <input type="date" value={s.price_date} onChange={(e) => set("price_date", e.target.value)} className={inputCls} />
+            </label>
             <NumField label="牧原股价（元）" value={s.muyuan_close} onChange={(v) => set("muyuan_close", v)} />
             <NumField label="能繁母猪存栏（万头）" value={s.sow_stock} onChange={(v) => set("sow_stock", v)} step="1" />
             <NumField label="母猪月环比（%）" value={s.sow_mom} onChange={(v) => set("sow_mom", v)} />
             <NumField label="上月环比（%）" value={s.sow_mom_prev} onChange={(v) => set("sow_mom_prev", v)} />
             <NumField label="牧原完全成本（元/公斤）" value={s.muyuan_cost} onChange={(v) => set("muyuan_cost", v)} />
             <NumField label="牧原最近单季利润（亿元）" value={s.muyuan_q2_profit} onChange={(v) => set("muyuan_q2_profit", v)} step="1" />
-            <label className="block">
-              <span className="text-xs text-[#6b675c]">仔猪价格动向</span>
-              <select value={s.piglet_trend} onChange={(e) => set("piglet_trend", e.target.value as Snapshot["piglet_trend"])} className={inputCls}>
-                <option value="surge">快速上涨</option>
-                <option value="slow_up">温和回升</option>
-                <option value="flat">平稳</option>
-                <option value="low">低迷</option>
-              </select>
-            </label>
             <label className="block">
               <span className="text-xs text-[#6b675c]">冻品库存</span>
               <select value={s.frozen_stock} onChange={(e) => set("frozen_stock", e.target.value as Snapshot["frozen_stock"])} className={inputCls}>

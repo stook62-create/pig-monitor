@@ -3,14 +3,20 @@
     "position_cost": 37.3
   },
   "current": {
-    "as_of": "2026-10-15",
-    "version": "R20261015",
-    "refreshed_at": "2026-10-15 05:58",
+    "as_of": "2026-10-25",
+    "version": "R20261025",
+    "refreshed_at": "2026-10-25 11:53",
     "position_cost": 37.3,
     "snapshot": {
-      "pig_price": 10.62,
+      "pig_price": 10.89,
+      "pig_wow": -1.6,
+      "pig_price_daily": 9.57,
+      "pig_price_daily_date": "2026-10-23",
+      "price_date": "2026-10-15",
       "pig_price_low": 9.5,
       "muyuan_june_avg_price": 9.69,
+      "piglet_price": 19.05,
+      "piglet_wow": -2.4,
       "piglet_trend": "low",
       "frozen_stock": "high",
       "sow_stock": 3780,
@@ -19,23 +25,642 @@
       "muyuan_cost": 11.6,
       "muyuan_q2_profit": -50,
       "industry_loss_per_head": 213,
-      "muyuan_close": 39.43,
+      "muyuan_close": 41.61,
       "muyuan_year_low": 31.81,
       "muyuan_year_high": 51.29,
       "policy_supportive": true,
+      "price_history": [
+        {
+          "date": "2026-01-22",
+          "pig_price": 13.39,
+          "pig_wow": 2.5,
+          "piglet_price": 25.96,
+          "piglet_wow": 4.5,
+          "published_at": "2026-01-27"
+        },
+        {
+          "date": "2026-01-29",
+          "pig_price": 13.43,
+          "pig_wow": 0.3,
+          "piglet_price": 26.87,
+          "piglet_wow": 3.5,
+          "published_at": "2026-02-04"
+        },
+        {
+          "date": "2026-02-05",
+          "pig_price": 13.27,
+          "pig_wow": -1.2,
+          "piglet_price": 27.39,
+          "piglet_wow": 1.9,
+          "published_at": "2026-02-10"
+        },
+        {
+          "date": "2026-02-12",
+          "pig_price": 12.94,
+          "pig_wow": -2.5,
+          "piglet_price": 27.56,
+          "piglet_wow": 0.6,
+          "published_at": "2026-02-26"
+        },
+        {
+          "date": "2026-02-26",
+          "pig_price": 12.45,
+          "pig_wow": -1.3,
+          "piglet_price": 27.67,
+          "piglet_wow": 0.1,
+          "published_at": "2026-03-03"
+        },
+        {
+          "date": "2026-03-02",
+          "pig_price": 12.62,
+          "pig_wow": -2.5,
+          "piglet_price": 27.64,
+          "piglet_wow": 0.3,
+          "published_at": "2026-03-02"
+        },
+        {
+          "date": "2026-03-05",
+          "pig_price": 11.89,
+          "pig_wow": -4.5,
+          "piglet_price": 27.44,
+          "piglet_wow": 0.0,
+          "published_at": "2026-03-10"
+        },
+        {
+          "date": "2026-03-12",
+          "pig_price": 11.38,
+          "pig_wow": -4.3,
+          "piglet_price": 26.9,
+          "piglet_wow": -2.0,
+          "published_at": "2026-03-18"
+        },
+        {
+          "date": "2026-03-19",
+          "pig_price": 11.05,
+          "pig_wow": -2.9,
+          "piglet_price": 26.2,
+          "piglet_wow": -2.6,
+          "published_at": "2026-03-25"
+        },
+        {
+          "date": "2026-03-26",
+          "pig_price": 10.68,
+          "pig_wow": -3.3,
+          "piglet_price": 25.42,
+          "piglet_wow": -3.0,
+          "published_at": "2026-03-30"
+        },
+        {
+          "date": "2026-04-02",
+          "pig_price": 10.4,
+          "pig_wow": -2.6,
+          "piglet_price": 24.56,
+          "piglet_wow": -3.4,
+          "published_at": "2026-04-08"
+        },
+        {
+          "date": "2026-04-09",
+          "pig_price": 10.03,
+          "pig_wow": -3.6,
+          "piglet_price": 23.77,
+          "piglet_wow": -3.2,
+          "published_at": "2026-04-15"
+        },
+        {
+          "date": "2026-04-16",
+          "pig_price": 9.75,
+          "pig_wow": -2.8,
+          "piglet_price": 23.11,
+          "piglet_wow": -2.8,
+          "published_at": "2026-04-22"
+        },
+        {
+          "date": "2026-04-23",
+          "pig_price": 10.0,
+          "pig_wow": 2.6,
+          "piglet_price": 22.94,
+          "piglet_wow": -0.7,
+          "published_at": "2026-05-09"
+        },
+        {
+          "date": "2026-04-30",
+          "pig_price": 10.18,
+          "pig_wow": 1.8,
+          "piglet_price": 23.11,
+          "piglet_wow": 0.7,
+          "published_at": "2026-05-09"
+        },
+        {
+          "date": "2026-05-07",
+          "pig_price": 10.19,
+          "pig_wow": 0.1,
+          "piglet_price": 23.26,
+          "piglet_wow": 0.6,
+          "published_at": "2026-05-14"
+        },
+        {
+          "date": "2026-05-14",
+          "pig_price": 10.16,
+          "pig_wow": -0.3,
+          "piglet_price": 23.31,
+          "piglet_wow": 0.2,
+          "published_at": "2026-05-20"
+        },
+        {
+          "date": "2026-05-21",
+          "pig_price": 10.12,
+          "pig_wow": -0.4,
+          "piglet_price": 23.39,
+          "piglet_wow": 0.3,
+          "published_at": "2026-05-26"
+        },
+        {
+          "date": "2026-06-04",
+          "pig_price": 10.14,
+          "pig_wow": 0.0,
+          "piglet_price": 23.3,
+          "piglet_wow": -0.6,
+          "published_at": "2026-06-10"
+        },
+        {
+          "date": "2026-06-11",
+          "pig_price": 10.08,
+          "pig_wow": -0.6,
+          "piglet_price": 22.9,
+          "piglet_wow": -1.7,
+          "published_at": "2026-06-17"
+        },
+        {
+          "date": "2026-06-18",
+          "pig_price": 10.06,
+          "pig_wow": -0.2,
+          "piglet_price": 22.29,
+          "piglet_wow": -2.7,
+          "published_at": "2026-06-23"
+        },
+        {
+          "date": "2026-06-25",
+          "pig_price": 10.06,
+          "pig_wow": 0.0,
+          "piglet_price": 21.67,
+          "piglet_wow": -2.8,
+          "published_at": "2026-07-01"
+        },
+        {
+          "date": "2026-07-02",
+          "pig_price": 10.48,
+          "pig_wow": 4.2,
+          "piglet_price": 21.64,
+          "piglet_wow": -0.1,
+          "published_at": "2026-07-07"
+        },
+        {
+          "date": "2026-07-09",
+          "pig_price": 11.35,
+          "pig_wow": 8.3,
+          "piglet_price": 22.43,
+          "piglet_wow": 3.7,
+          "published_at": "2026-07-14"
+        },
+        {
+          "date": "2026-07-16",
+          "pig_price": 11.5,
+          "pig_wow": 1.3,
+          "piglet_price": 22.91,
+          "piglet_wow": 2.1,
+          "published_at": "2026-07-22"
+        },
+        {
+          "date": "2026-07-23",
+          "pig_price": 11.45,
+          "pig_wow": -0.4,
+          "piglet_price": 23.2,
+          "piglet_wow": 1.3,
+          "published_at": "2026-07-29"
+        },
+        {
+          "date": "2026-07-30",
+          "pig_price": 11.22,
+          "pig_wow": -2.0,
+          "piglet_price": 23.0,
+          "piglet_wow": -0.9,
+          "published_at": "2026-08-04"
+        },
+        {
+          "date": "2026-08-06",
+          "pig_price": 11.13,
+          "pig_wow": -0.8,
+          "piglet_price": 22.42,
+          "piglet_wow": -2.5,
+          "published_at": "2026-08-11"
+        },
+        {
+          "date": "2026-08-13",
+          "pig_price": 11.23,
+          "pig_wow": 0.9,
+          "piglet_price": 21.98,
+          "piglet_wow": -2.0,
+          "published_at": "2026-08-19"
+        },
+        {
+          "date": "2026-08-20",
+          "pig_price": 11.52,
+          "pig_wow": 2.6,
+          "piglet_price": 21.75,
+          "piglet_wow": -1.0,
+          "published_at": "2026-08-25"
+        },
+        {
+          "date": "2026-08-27",
+          "pig_price": 11.55,
+          "pig_wow": 0.3,
+          "piglet_price": 21.48,
+          "piglet_wow": -1.2,
+          "published_at": "2026-09-01"
+        },
+        {
+          "date": "2026-09-03",
+          "pig_price": 11.59,
+          "pig_wow": 0.3,
+          "piglet_price": 21.12,
+          "piglet_wow": -1.7,
+          "published_at": "2026-09-08"
+        },
+        {
+          "date": "2026-09-10",
+          "pig_price": 11.54,
+          "pig_wow": -0.4,
+          "piglet_price": 20.83,
+          "piglet_wow": -1.4,
+          "published_at": "2026-09-16"
+        },
+        {
+          "date": "2026-09-17",
+          "pig_price": 11.48,
+          "pig_wow": -0.5,
+          "piglet_price": 20.61,
+          "piglet_wow": -1.1,
+          "published_at": "2026-09-22"
+        },
+        {
+          "date": "2026-09-24",
+          "pig_price": 11.36,
+          "pig_wow": -1.0,
+          "piglet_price": 20.2,
+          "piglet_wow": -2.0,
+          "published_at": "2026-09-30"
+        },
+        {
+          "date": "2026-09-30",
+          "pig_price": 11.13,
+          "pig_wow": -2.0,
+          "piglet_price": 19.77,
+          "piglet_wow": -2.1,
+          "published_at": "2026-10-08"
+        },
+        {
+          "date": "2026-10-08",
+          "pig_price": 11.07,
+          "pig_wow": -0.5,
+          "piglet_price": 19.51,
+          "piglet_wow": -1.3,
+          "published_at": "2026-10-14"
+        },
+        {
+          "date": "2026-10-15",
+          "pig_price": 10.89,
+          "pig_wow": -1.6,
+          "piglet_price": 19.05,
+          "piglet_wow": -2.4,
+          "published_at": "2026-10-20"
+        }
+      ],
       "_sources": {
-        "牧原股价": "自动·腾讯行情（39.43元）",
-        "生猪均价": "人工基准（自动失败：The read operation timed out）",
+        "牧原股价": "自动·腾讯行情（41.61元）",
+        "日度猪价": "自动·搜猪网（2026-10-23：9.57元/公斤）",
+        "价格走势": "自动·农业农村部周度（2026-10-15，38个锚点）",
         "母猪存栏": "人工·月度官方数据",
-        "仔猪/库存/成本/利润": "人工·研究底稿"
+        "库存/成本/利润": "人工·研究底稿"
       }
     },
-    "conclusion": "价格底已现（3-4月9.5-10元大概率是本轮低点），但时间底未走完：磨底预计持续到2026年底，趋势性回升窗口在2027年上半年。牧原亏损峰值（2026Q2）大概率已过，接下来是“减亏+修复资产负债表+吃下退出者份额”的半年。本期概率引擎：能繁母猪去化加速（环比-1.33%，降幅连续扩大）→ A+2 / C-2。当前判断——情景A（2027H1反转）42%、情景B（微利中枢+小周期）45%、情景C（十年微利）13%。对照持仓成本37.3元：现价39.43元（浮盈+5.7%）处于38-42元拉锯箱体，策略为底仓躺平、破位加仓、证伪止损。",
+    "price_history": [
+      {
+        "date": "2026-01-22",
+        "pig_price": 13.39,
+        "pig_wow": 2.5,
+        "piglet_price": 25.96,
+        "piglet_wow": 4.5,
+        "published_at": "2026-01-27"
+      },
+      {
+        "date": "2026-01-29",
+        "pig_price": 13.43,
+        "pig_wow": 0.3,
+        "piglet_price": 26.87,
+        "piglet_wow": 3.5,
+        "published_at": "2026-02-04"
+      },
+      {
+        "date": "2026-02-05",
+        "pig_price": 13.27,
+        "pig_wow": -1.2,
+        "piglet_price": 27.39,
+        "piglet_wow": 1.9,
+        "published_at": "2026-02-10"
+      },
+      {
+        "date": "2026-02-12",
+        "pig_price": 12.94,
+        "pig_wow": -2.5,
+        "piglet_price": 27.56,
+        "piglet_wow": 0.6,
+        "published_at": "2026-02-26"
+      },
+      {
+        "date": "2026-02-26",
+        "pig_price": 12.45,
+        "pig_wow": -1.3,
+        "piglet_price": 27.67,
+        "piglet_wow": 0.1,
+        "published_at": "2026-03-03"
+      },
+      {
+        "date": "2026-03-02",
+        "pig_price": 12.62,
+        "pig_wow": -2.5,
+        "piglet_price": 27.64,
+        "piglet_wow": 0.3,
+        "published_at": "2026-03-02"
+      },
+      {
+        "date": "2026-03-05",
+        "pig_price": 11.89,
+        "pig_wow": -4.5,
+        "piglet_price": 27.44,
+        "piglet_wow": 0.0,
+        "published_at": "2026-03-10"
+      },
+      {
+        "date": "2026-03-12",
+        "pig_price": 11.38,
+        "pig_wow": -4.3,
+        "piglet_price": 26.9,
+        "piglet_wow": -2.0,
+        "published_at": "2026-03-18"
+      },
+      {
+        "date": "2026-03-19",
+        "pig_price": 11.05,
+        "pig_wow": -2.9,
+        "piglet_price": 26.2,
+        "piglet_wow": -2.6,
+        "published_at": "2026-03-25"
+      },
+      {
+        "date": "2026-03-26",
+        "pig_price": 10.68,
+        "pig_wow": -3.3,
+        "piglet_price": 25.42,
+        "piglet_wow": -3.0,
+        "published_at": "2026-03-30"
+      },
+      {
+        "date": "2026-04-02",
+        "pig_price": 10.4,
+        "pig_wow": -2.6,
+        "piglet_price": 24.56,
+        "piglet_wow": -3.4,
+        "published_at": "2026-04-08"
+      },
+      {
+        "date": "2026-04-09",
+        "pig_price": 10.03,
+        "pig_wow": -3.6,
+        "piglet_price": 23.77,
+        "piglet_wow": -3.2,
+        "published_at": "2026-04-15"
+      },
+      {
+        "date": "2026-04-16",
+        "pig_price": 9.75,
+        "pig_wow": -2.8,
+        "piglet_price": 23.11,
+        "piglet_wow": -2.8,
+        "published_at": "2026-04-22"
+      },
+      {
+        "date": "2026-04-23",
+        "pig_price": 10.0,
+        "pig_wow": 2.6,
+        "piglet_price": 22.94,
+        "piglet_wow": -0.7,
+        "published_at": "2026-05-09"
+      },
+      {
+        "date": "2026-04-30",
+        "pig_price": 10.18,
+        "pig_wow": 1.8,
+        "piglet_price": 23.11,
+        "piglet_wow": 0.7,
+        "published_at": "2026-05-09"
+      },
+      {
+        "date": "2026-05-07",
+        "pig_price": 10.19,
+        "pig_wow": 0.1,
+        "piglet_price": 23.26,
+        "piglet_wow": 0.6,
+        "published_at": "2026-05-14"
+      },
+      {
+        "date": "2026-05-14",
+        "pig_price": 10.16,
+        "pig_wow": -0.3,
+        "piglet_price": 23.31,
+        "piglet_wow": 0.2,
+        "published_at": "2026-05-20"
+      },
+      {
+        "date": "2026-05-21",
+        "pig_price": 10.12,
+        "pig_wow": -0.4,
+        "piglet_price": 23.39,
+        "piglet_wow": 0.3,
+        "published_at": "2026-05-26"
+      },
+      {
+        "date": "2026-06-04",
+        "pig_price": 10.14,
+        "pig_wow": 0.0,
+        "piglet_price": 23.3,
+        "piglet_wow": -0.6,
+        "published_at": "2026-06-10"
+      },
+      {
+        "date": "2026-06-11",
+        "pig_price": 10.08,
+        "pig_wow": -0.6,
+        "piglet_price": 22.9,
+        "piglet_wow": -1.7,
+        "published_at": "2026-06-17"
+      },
+      {
+        "date": "2026-06-18",
+        "pig_price": 10.06,
+        "pig_wow": -0.2,
+        "piglet_price": 22.29,
+        "piglet_wow": -2.7,
+        "published_at": "2026-06-23"
+      },
+      {
+        "date": "2026-06-25",
+        "pig_price": 10.06,
+        "pig_wow": 0.0,
+        "piglet_price": 21.67,
+        "piglet_wow": -2.8,
+        "published_at": "2026-07-01"
+      },
+      {
+        "date": "2026-07-02",
+        "pig_price": 10.48,
+        "pig_wow": 4.2,
+        "piglet_price": 21.64,
+        "piglet_wow": -0.1,
+        "published_at": "2026-07-07"
+      },
+      {
+        "date": "2026-07-09",
+        "pig_price": 11.35,
+        "pig_wow": 8.3,
+        "piglet_price": 22.43,
+        "piglet_wow": 3.7,
+        "published_at": "2026-07-14"
+      },
+      {
+        "date": "2026-07-16",
+        "pig_price": 11.5,
+        "pig_wow": 1.3,
+        "piglet_price": 22.91,
+        "piglet_wow": 2.1,
+        "published_at": "2026-07-22"
+      },
+      {
+        "date": "2026-07-23",
+        "pig_price": 11.45,
+        "pig_wow": -0.4,
+        "piglet_price": 23.2,
+        "piglet_wow": 1.3,
+        "published_at": "2026-07-29"
+      },
+      {
+        "date": "2026-07-30",
+        "pig_price": 11.22,
+        "pig_wow": -2.0,
+        "piglet_price": 23.0,
+        "piglet_wow": -0.9,
+        "published_at": "2026-08-04"
+      },
+      {
+        "date": "2026-08-06",
+        "pig_price": 11.13,
+        "pig_wow": -0.8,
+        "piglet_price": 22.42,
+        "piglet_wow": -2.5,
+        "published_at": "2026-08-11"
+      },
+      {
+        "date": "2026-08-13",
+        "pig_price": 11.23,
+        "pig_wow": 0.9,
+        "piglet_price": 21.98,
+        "piglet_wow": -2.0,
+        "published_at": "2026-08-19"
+      },
+      {
+        "date": "2026-08-20",
+        "pig_price": 11.52,
+        "pig_wow": 2.6,
+        "piglet_price": 21.75,
+        "piglet_wow": -1.0,
+        "published_at": "2026-08-25"
+      },
+      {
+        "date": "2026-08-27",
+        "pig_price": 11.55,
+        "pig_wow": 0.3,
+        "piglet_price": 21.48,
+        "piglet_wow": -1.2,
+        "published_at": "2026-09-01"
+      },
+      {
+        "date": "2026-09-03",
+        "pig_price": 11.59,
+        "pig_wow": 0.3,
+        "piglet_price": 21.12,
+        "piglet_wow": -1.7,
+        "published_at": "2026-09-08"
+      },
+      {
+        "date": "2026-09-10",
+        "pig_price": 11.54,
+        "pig_wow": -0.4,
+        "piglet_price": 20.83,
+        "piglet_wow": -1.4,
+        "published_at": "2026-09-16"
+      },
+      {
+        "date": "2026-09-17",
+        "pig_price": 11.48,
+        "pig_wow": -0.5,
+        "piglet_price": 20.61,
+        "piglet_wow": -1.1,
+        "published_at": "2026-09-22"
+      },
+      {
+        "date": "2026-09-24",
+        "pig_price": 11.36,
+        "pig_wow": -1.0,
+        "piglet_price": 20.2,
+        "piglet_wow": -2.0,
+        "published_at": "2026-09-30"
+      },
+      {
+        "date": "2026-09-30",
+        "pig_price": 11.13,
+        "pig_wow": -2.0,
+        "piglet_price": 19.77,
+        "piglet_wow": -2.1,
+        "published_at": "2026-10-08"
+      },
+      {
+        "date": "2026-10-08",
+        "pig_price": 11.07,
+        "pig_wow": -0.5,
+        "piglet_price": 19.51,
+        "piglet_wow": -1.3,
+        "published_at": "2026-10-14"
+      },
+      {
+        "date": "2026-10-15",
+        "pig_price": 10.89,
+        "pig_wow": -1.6,
+        "piglet_price": 19.05,
+        "piglet_wow": -2.4,
+        "published_at": "2026-10-20"
+      }
+    ],
+    "conclusion": "价格底已现（3-4月9.5-10元大概率是本轮低点），但时间底未走完：磨底预计持续到2026年底，趋势性回升窗口在2027年上半年。牧原亏损峰值（2026Q2）大概率已过，接下来是“减亏+修复资产负债表+吃下退出者份额”的半年。本期概率引擎：能繁母猪去化加速（环比-1.33%，降幅连续扩大）→ A+2 / C-2。当前判断——情景A（2027H1反转）42%、情景B（微利中枢+小周期）45%、情景C（十年微利）13%。对照持仓成本37.3元：现价41.61元（浮盈+11.6%）处于38-42元拉锯箱体，策略为底仓躺平、破位加仓、证伪止损。",
     "key_metrics": [
       {
-        "name": "生猪均价",
-        "value": "10.62 元/公斤",
-        "delta": "低点9.5元已现",
+        "name": "生猪周均价",
+        "value": "10.89 元/公斤",
+        "delta": "周环比 -1.6% · 日报 9.57元",
+        "dir": "down"
+      },
+      {
+        "name": "仔猪周均价",
+        "value": "19.05 元/公斤",
+        "delta": "周环比 -2.4%",
         "dir": "down"
       },
       {
@@ -58,8 +683,8 @@
       },
       {
         "name": "牧原股价",
-        "value": "39.43 元",
-        "delta": "成本37.3元 浮盈+5.7%",
+        "value": "41.61 元",
+        "delta": "成本37.3元 浮盈+11.6%",
         "dir": "up"
       }
     ],
@@ -87,7 +712,7 @@
       "能繁母猪去化加速（环比-1.33%，降幅连续扩大）→ A+2 / C-2"
     ],
     "scenario_targets": {
-      "current_mcap": 2145,
+      "current_mcap": 2264,
       "cost_mcap": 2029,
       "scale_max": 5000,
       "targets": [
@@ -120,7 +745,7 @@
     "factors": [
       {
         "name": "生猪现货价格",
-        "value": "10.62 元/公斤",
+        "value": "10.89 元/公斤",
         "threshold": "反转确认：连续4-6周站稳12.5元",
         "status": "negative",
         "note": "低于牧原完全成本11.6元，行业深亏出清中"
@@ -243,10 +868,11 @@
       }
     ],
     "sources": {
-      "牧原股价": "自动·腾讯行情（39.43元）",
-      "生猪均价": "人工基准（自动失败：The read operation timed out）",
+      "牧原股价": "自动·腾讯行情（41.61元）",
+      "日度猪价": "自动·搜猪网（2026-10-23：9.57元/公斤）",
+      "价格走势": "自动·农业农村部周度（2026-10-15，38个锚点）",
       "母猪存栏": "人工·月度官方数据",
-      "仔猪/库存/成本/利润": "人工·研究底稿"
+      "库存/成本/利润": "人工·研究底稿"
     }
   },
   "versions": [

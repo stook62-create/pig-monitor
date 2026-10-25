@@ -81,7 +81,7 @@ def fetch_muyuan_close() -> float:
 
 
 def fetch_pig_price_spot() -> tuple:
-    """抓取搜猪网生猪日报列表页标题中的全国瘦肉型出栏均价（按日期倒序，取最新一期）。"""
+    """抓取搜猪网最新日度瘦肉型出栏均价，作为周度主序列之外的辅助锚点。"""
     html = _http_get("https://www.soozhu.com/article/")
     items = re.findall(r'href="(/article/\d+/)"[^>]*>([^<]*生猪日报[^<]*)</a>', html)
     for _link, title in items:
@@ -89,16 +89,125 @@ def fetch_pig_price_spot() -> tuple:
         if m:
             month, day, price = int(m.group(1)), int(m.group(2)), float(m.group(3))
             if 5 <= price <= 30:
-                return price, f"{month}月{day}日"
+                return price, f"{date.today().year}-{month:02d}-{day:02d}"
     raise ValueError("未找到生猪日报标题")
+
+
+def _parse_moa_report(html: str, href: str) -> dict:
+    """从农业农村部周报正文提取采集日、生猪/仔猪均价及周环比。"""
+    from html import unescape
+    text = unescape(re.sub(r"<[^>]+>", " ", html))
+    text = re.sub(r"\s+", " ", text)
+    year = int(re.search(r"/(\d{4})\d{2}/", href).group(1))
+
+    dm = re.search(r"采集日为\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日", text)
+    if dm:
+        month, day = int(dm.group(1)), int(dm.group(2))
+    else:
+        pm = re.search(r"t(\d{4})(\d{2})(\d{2})_", href)
+        year, month, day = int(pm.group(1)), int(pm.group(2)), int(pm.group(3))
+
+    def price_and_wow(name: str) -> tuple:
+        m = re.search(
+            rf"全国\s*{name}\s*平均价格\s*([\d.]+)\s*元\s*/\s*公斤"
+            rf"(?:\s*，比前一周(上涨|下跌|持平)(?:\s*([\d.]+)%)?)?",
+            text,
+        )
+        if not m:
+            raise ValueError(f"未解析到{name}价格")
+        direction = m.group(2)
+        wow = float(m.group(3) or 0)
+        if direction == "下跌":
+            wow = -wow
+        return float(m.group(1)), wow
+
+    pig_price, pig_wow = price_and_wow("生猪")
+    piglet_price, piglet_wow = price_and_wow("仔猪")
+    return {
+        "date": f"{year}-{month:02d}-{day:02d}",
+        "pig_price": pig_price,
+        "pig_wow": pig_wow,
+        "piglet_price": piglet_price,
+        "piglet_wow": piglet_wow,
+    }
+
+
+def fetch_moa_price_history(since: str = None) -> list:
+    """抓取农业农村部周度价格序列；since 用于增量更新，首次抓取全年。"""
+    base = "https://xmsyj.moa.gov.cn/jcyj/"
+    candidates = []
+    stop = False
+    for page in range(4):
+        if stop:
+            break
+        url = base if page == 0 else f"{base}index_{page}.htm"
+        list_html = _http_get(url)
+        links = re.findall(r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', list_html, re.S)
+        found = False
+        for href, raw_title in links:
+            title = re.sub(r"<[^>]+>", "", raw_title).strip()
+            if "畜产品和饲料集贸市场价格情况" not in title:
+                continue
+            found = True
+            ym = re.search(r"/(\d{6})/", href)
+            if not ym or not ym.group(1).startswith(str(date.today().year)):
+                stop = True
+                continue
+            published = re.search(r"t(\d{8})_", href).group(1)
+            published_iso = f"{published[:4]}-{published[4:6]}-{published[6:]}"
+            if since and published_iso <= since:
+                stop = True
+                continue
+            candidates.append((href, published_iso))
+        if not found:
+            break
+
+    # 列表倒序，正序抓取后由调用方统一去重排序
+    points = []
+    for href, published_iso in reversed(candidates):
+        try:
+            full_url = base + href[2:] if href.startswith("./") else href
+            point = _parse_moa_report(_http_get(full_url), href)
+            if since and point["date"] <= since:
+                continue
+            point["published_at"] = published_iso
+            points.append(point)
+        except Exception as e:
+            print(f"  ! 周报解析失败 {href}: {e}")
+    if not points and not since:
+        raise ValueError("农业农村部周度价格序列为空")
+    return points
+
+
+def merge_price_history(existing: list, new_points: list) -> list:
+    merged = {p["date"]: dict(p) for p in (existing or [])}
+    for point in new_points or []:
+        merged[point["date"]] = dict(point)
+    return [merged[k] for k in sorted(merged)]
+
+
+def classify_piglet(wow: float) -> str:
+    if wow >= 3:
+        return "surge"
+    if wow > 0.3:
+        return "slow_up"
+    if wow >= -0.3:
+        return "flat"
+    return "low"
 
 
 # 人工维护的基准值（月度/研究性数据；自动采集失败的字段也回退到这里）
 MANUAL_BASELINE = {
-    "pig_price": 10.62,            # 搜猪网瘦肉型出栏均价（2026-08-14，自动采集会覆盖）
+    "pig_price": 10.89,            # 农业农村部周度生猪均价（2026-10-15）
+    "pig_wow": -1.6,
+    "pig_price_daily": 9.57,       # 搜猪网日度瘦肉型出栏均价（2026-10-23）
+    "pig_price_daily_date": "2026-10-23",
+    "price_date": "2026-10-15",
     "pig_price_low": 9.5,          # 本轮低点（2026年3-4月）
     "muyuan_june_avg_price": 9.69, # 牧原6月销售均价
-    "piglet_trend": "low",         # 仔猪：农业农村部8月第1周均价22.42元/公斤，环比-2.5%，29省全部下跌（7月异动已逆转）
+    "piglet_price": 19.05,         # 农业农村部周度仔猪均价（2026-10-15）
+    "piglet_wow": -2.4,
+    "piglet_trend": "low",
     "frozen_stock": "high",        # 冻品库存：high/normal/low
     "sow_stock": 3780,             # 能繁母猪存栏（万头，2026Q2末，月度数据）
     "sow_mom": -1.33,              # 最新月环比（%，2026年6月）
@@ -113,12 +222,8 @@ MANUAL_BASELINE = {
 }
 
 
-def collect_snapshot() -> dict:
-    """采集最新数据快照：能自动拉取的自动拉取，失败回退到人工基准值。
-
-    自动源：牧原股价（腾讯行情）、生猪现货价（搜猪网日报标题）。
-    人工维护：母猪存栏/环比（月度官方数据）、仔猪动向、冻品库存、成本、单季利润、政策。
-    """
+def collect_snapshot(existing_history: list = None) -> dict:
+    """自动采集股价、日度猪价和农业农村部周度生猪/仔猪历史序列，失败回退。"""
     snap = dict(MANUAL_BASELINE)
     sources = {}
 
@@ -129,14 +234,35 @@ def collect_snapshot() -> dict:
         sources["牧原股价"] = f"人工基准（自动失败：{e}）"
 
     try:
-        price, day = fetch_pig_price_spot()
-        snap["pig_price"] = price
-        sources["生猪均价"] = f"自动·搜猪网日报（{day}：{price}元/公斤）"
+        daily_price, daily_date = fetch_pig_price_spot()
+        snap["pig_price_daily"] = daily_price
+        snap["pig_price_daily_date"] = daily_date
+        sources["日度猪价"] = f"自动·搜猪网（{daily_date}：{daily_price}元/公斤）"
     except Exception as e:
-        sources["生猪均价"] = f"人工基准（自动失败：{e}）"
+        sources["日度猪价"] = f"人工基准（自动失败：{e}）"
+
+    try:
+        since = max((p["date"] for p in (existing_history or [])), default=None)
+        new_points = fetch_moa_price_history(since=since)
+        history = merge_price_history(existing_history or [], new_points)
+        if not history:
+            raise ValueError("暂无周度历史数据")
+        snap["price_history"] = history
+        latest = history[-1]
+        for key in ("pig_price", "pig_wow", "piglet_price", "piglet_wow", "date"):
+            if key == "date":
+                snap["price_date"] = latest[key]
+            else:
+                snap[key] = latest[key]
+        snap["piglet_trend"] = classify_piglet(latest["piglet_wow"])
+        sources["价格走势"] = f"自动·农业农村部周度（{latest['date']}，{len(history)}个锚点）"
+    except Exception as e:
+        if existing_history:
+            snap["price_history"] = existing_history
+        sources["价格走势"] = f"沿用历史序列（自动失败：{e}）"
 
     sources["母猪存栏"] = "人工·月度官方数据"
-    sources["仔猪/库存/成本/利润"] = "人工·研究底稿"
+    sources["库存/成本/利润"] = "人工·研究底稿"
     snap["_sources"] = sources
     return snap
 
@@ -372,9 +498,15 @@ def build_report(snapshot: dict, settings: dict, as_of: str, version: str) -> di
         "refreshed_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "position_cost": cost,
         "snapshot": snapshot,
+        "price_history": snapshot.get("price_history", []),
         "conclusion": build_conclusion(snapshot, prob_info, cost),
         "key_metrics": [
-            {"name": "生猪均价", "value": f"{snapshot['pig_price']:.2f} 元/公斤", "delta": "低点9.5元已现", "dir": "down"},
+            {"name": "生猪周均价", "value": f"{snapshot['pig_price']:.2f} 元/公斤",
+             "delta": f"周环比 {snapshot.get('pig_wow', 0):+.1f}% · 日报 {snapshot.get('pig_price_daily', snapshot['pig_price']):.2f}元",
+             "dir": "up" if snapshot.get("pig_wow", 0) > 0 else "down" if snapshot.get("pig_wow", 0) < 0 else "flat"},
+            {"name": "仔猪周均价", "value": f"{snapshot['piglet_price']:.2f} 元/公斤",
+             "delta": f"周环比 {snapshot.get('piglet_wow', 0):+.1f}%",
+             "dir": "up" if snapshot.get("piglet_wow", 0) > 0 else "down" if snapshot.get("piglet_wow", 0) < 0 else "flat"},
             {"name": "能繁母猪", "value": f"{snapshot['sow_stock']} 万头", "delta": f"环比 {snapshot['sow_mom']:+.2f}%", "dir": "down"},
             {"name": "牧原完全成本", "value": f"{snapshot['muyuan_cost']:.1f} 元/公斤", "delta": "行业最低", "dir": "up"},
             {"name": "牧原Q2单季", "value": f"约 {snapshot['muyuan_q2_profit']:.0f} 亿元", "delta": "亏损峰值大概率已过", "dir": "down"},
@@ -418,9 +550,11 @@ def archived_versions() -> list:
 
 # ---------- 7. 三种工作模式 ----------
 def do_refresh():
-    """拉取最新数据，重建当前报告（不存档）。"""
+    """拉取最新数据，重建当前报告（不存档），并累积周度价格历史。"""
     settings = load_settings()
-    snapshot = collect_snapshot()
+    previous = load_state().get("current") or {}
+    previous_history = previous.get("price_history") or previous.get("snapshot", {}).get("price_history", [])
+    snapshot = collect_snapshot(previous_history)
     as_of = date.today().isoformat()
     current = build_report(snapshot, settings, as_of, f"R{as_of.replace('-', '')}")
     state = {"settings": settings, "current": current, "versions": archived_versions()}

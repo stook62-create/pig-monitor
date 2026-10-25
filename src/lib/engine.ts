@@ -3,11 +3,18 @@
  * 与 monitor.py 保持逻辑同步：修改判定规则/概率权重时两边都要改。
  * 输入数据快照 + 持仓成本 → 输出完整报告（与后端 Report 同构）。
  */
-import type { Report, Factor, ScenarioTargets, PositionZone } from "@/types/report"
+import type { Report, Factor, ScenarioTargets, PositionZone, PricePoint } from "@/types/report"
 
 export interface Snapshot {
   pig_price: number
+  pig_wow: number
   pig_price_low: number
+  pig_price_daily?: number
+  pig_price_daily_date?: string
+  price_date?: string
+  piglet_price: number
+  piglet_wow: number
+  price_history?: PricePoint[]
   muyuan_june_avg_price: number
   piglet_trend: "surge" | "slow_up" | "flat" | "low"
   frozen_stock: "high" | "normal" | "low"
@@ -262,8 +269,31 @@ export function todayStr(): string {
   return nowStr().slice(0, 10)
 }
 
+function classifyPiglet(wow: number): Snapshot["piglet_trend"] {
+  if (wow >= 3) return "surge"
+  if (wow > 0.3) return "slow_up"
+  if (wow >= -0.3) return "flat"
+  return "low"
+}
+
 /** 由数据快照 + 持仓成本构建完整报告（与 monitor.py build_report 同构） */
 export function buildReport(snapshot: Snapshot, cost: number, asOf: string, version: string): Report {
+  const merged = new Map((snapshot.price_history ?? []).map((p) => [p.date, p]))
+  if (snapshot.price_date && snapshot.piglet_price > 0) {
+    merged.set(snapshot.price_date, {
+      date: snapshot.price_date,
+      pig_price: snapshot.pig_price,
+      pig_wow: snapshot.pig_wow,
+      piglet_price: snapshot.piglet_price,
+      piglet_wow: snapshot.piglet_wow,
+    })
+  }
+  const priceHistory = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date))
+  snapshot = {
+    ...snapshot,
+    piglet_trend: typeof snapshot.piglet_wow === "number" ? classifyPiglet(snapshot.piglet_wow) : snapshot.piglet_trend,
+    price_history: priceHistory,
+  }
   const factors = evaluate(snapshot)
   const probInfo = probabilities(snapshot)
   const pnl = ((snapshot.muyuan_close / cost - 1) * 100).toFixed(1)
@@ -273,9 +303,19 @@ export function buildReport(snapshot: Snapshot, cost: number, asOf: string, vers
     refreshed_at: nowStr(),
     position_cost: cost,
     snapshot,
+    price_history: priceHistory,
     conclusion: buildConclusion(snapshot, probInfo, cost),
     key_metrics: [
-      { name: "生猪均价", value: `${snapshot.pig_price.toFixed(2)} 元/公斤`, delta: "低点9.5元已现", dir: "down" },
+      {
+        name: "生猪周均价", value: `${snapshot.pig_price.toFixed(2)} 元/公斤`,
+        delta: `周环比 ${snapshot.pig_wow >= 0 ? "+" : ""}${snapshot.pig_wow.toFixed(1)}%${snapshot.pig_price_daily ? ` · 日报 ${snapshot.pig_price_daily.toFixed(2)}元` : ""}`,
+        dir: snapshot.pig_wow > 0 ? "up" : snapshot.pig_wow < 0 ? "down" : "flat",
+      },
+      {
+        name: "仔猪周均价", value: `${snapshot.piglet_price.toFixed(2)} 元/公斤`,
+        delta: `周环比 ${snapshot.piglet_wow >= 0 ? "+" : ""}${snapshot.piglet_wow.toFixed(1)}%`,
+        dir: snapshot.piglet_wow > 0 ? "up" : snapshot.piglet_wow < 0 ? "down" : "flat",
+      },
       { name: "能繁母猪", value: `${snapshot.sow_stock} 万头`, delta: `环比 ${snapshot.sow_mom >= 0 ? "+" : ""}${snapshot.sow_mom.toFixed(2)}%`, dir: "down" },
       { name: "牧原完全成本", value: `${snapshot.muyuan_cost.toFixed(1)} 元/公斤`, delta: "行业最低", dir: "up" },
       { name: "牧原Q2单季", value: `约 ${snapshot.muyuan_q2_profit.toFixed(0)} 亿元`, delta: "亏损峰值大概率已过", dir: "down" },
@@ -294,6 +334,6 @@ export function buildReport(snapshot: Snapshot, cost: number, asOf: string, vers
     signals: buildSignals(),
     position_zones: buildPositionZones(snapshot, cost),
     next_watch: buildNextWatch(),
-    sources: { 数据来源: "浏览器手动录入（本地运行时会自动拉取行情）" },
+    sources: { 数据来源: "浏览器手动录入（本地运行时会自动拉取行情）", 价格走势: "周度序列随快照累积，日度猪价仅作辅助锚点" },
   }
 }

@@ -4,6 +4,7 @@ import type { MonitorState, Report, FactorStatus } from "@/types/report"
 import { buildReport, todayStr, type Snapshot } from "@/lib/engine"
 import { loadLocal, saveLocal, mergeState, toLocal, clearLocal, exportState, parseImport } from "@/lib/store"
 import DataEntryModal from "@/components/DataEntryModal"
+import PriceCharts from "@/components/PriceCharts"
 
 const bundled = bundledJson as MonitorState
 
@@ -375,7 +376,7 @@ export default function Home() {
           {/* 01 关键指标 */}
           <section>
             <SectionTitle no="01" title="关键指标" sub={`截至 ${report.as_of}`} />
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
               {report.key_metrics.map((m) => (
                 <div key={m.name} className="rounded-lg border border-[#e0d8c4] bg-white p-4 shadow-sm">
                   <div className="text-xs text-[#8a8578]">{m.name}</div>
@@ -395,9 +396,15 @@ export default function Home() {
             )}
           </section>
 
-          {/* 02 走向概率判断 */}
+          {/* 02 价格监测 */}
           <section>
-            <SectionTitle no="02" title="走向概率判断" sub="概率引擎：基准 + 规则调整" />
+            <SectionTitle no="02" title="价格监测" sub="2026 年周度走势 · 单位：元/公斤" />
+            <PriceCharts report={report} />
+          </section>
+
+          {/* 03 走向概率判断 */}
+          <section>
+            <SectionTitle no="03" title="走向概率判断" sub="概率引擎：基准 + 规则调整" />
             <div className="rounded-lg border border-[#e0d8c4] bg-white p-5 shadow-sm space-y-4">
               {report.scenarios.map((s) => (
                 <div key={s.key}>
@@ -432,10 +439,10 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 03 情景目标市值参考 */}
+          {/* 04 情景目标市值参考 */}
           {report.scenario_targets && (
             <section>
-              <SectionTitle no="03" title="情景目标市值参考" sub={`当前市值约 ${report.scenario_targets.current_mcap} 亿`} />
+              <SectionTitle no="04" title="情景目标市值参考" sub={`当前市值约 ${report.scenario_targets.current_mcap} 亿`} />
               <div className="rounded-lg border border-[#e0d8c4] bg-white p-5 shadow-sm space-y-5">
                 <div className="space-y-3">
                   {report.scenario_targets.targets.map((t) => {
@@ -514,9 +521,9 @@ export default function Home() {
             </section>
           )}
 
-          {/* 04 指征因子矩阵 */}
+          {/* 05 指征因子矩阵 */}
           <section>
-            <SectionTitle no="04" title="指征因子矩阵" sub="八项因子 · 阈值自动判定" />
+            <SectionTitle no="05" title="指征因子矩阵" sub="八项因子 · 阈值自动判定" />
             <div className="rounded-lg border border-[#e0d8c4] bg-white shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[720px]">
@@ -550,9 +557,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 05 本期信号 */}
+          {/* 06 本期信号 */}
           <section>
-            <SectionTitle no="05" title="本期信号" />
+            <SectionTitle no="06" title="本期信号" />
             <div className="grid md:grid-cols-3 gap-3">
               {(
                 [
@@ -575,9 +582,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 06 持仓区域 */}
+          {/* 07 持仓区域 */}
           <section>
-            <SectionTitle no="06" title="持仓区域" sub={`对照成本 ${cost.toFixed(1)} 元`} />
+            <SectionTitle no="07" title="持仓区域" sub={`对照成本 ${cost.toFixed(1)} 元`} />
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {report.position_zones.map((z) => (
                 <div
@@ -599,9 +606,9 @@ export default function Home() {
             </div>
           </section>
 
-          {/* 07 下期重点盯防 */}
+          {/* 08 下期重点盯防 */}
           <section>
-            <SectionTitle no="07" title="下期重点盯防" />
+            <SectionTitle no="08" title="下期重点盯防" />
             <div className="rounded-lg border border-[#e0d8c4] bg-white shadow-sm divide-y divide-[#efe9da]">
               {report.next_watch.map((w, i) => (
                 <div key={i} className="flex items-baseline gap-4 px-5 py-3.5">

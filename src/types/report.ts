@@ -50,14 +50,31 @@ export interface ScenarioTargets {
   targets: ScenarioTarget[]
 }
 
+export interface PricePoint {
+  date: string
+  pig_price: number
+  pig_wow: number
+  piglet_price: number
+  piglet_wow: number
+  published_at?: string
+}
+
 export interface Report {
   as_of: string
   version: string
   refreshed_at?: string
   position_cost: number
   conclusion: string
+  price_history?: PricePoint[]
   snapshot: {
     pig_price: number
+    pig_wow?: number
+    pig_price_daily?: number
+    pig_price_daily_date?: string
+    price_date?: string
+    piglet_price?: number
+    piglet_wow?: number
+    price_history?: PricePoint[]
     sow_stock: number
     sow_mom: number
     muyuan_cost: number
