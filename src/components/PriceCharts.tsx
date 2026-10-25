@@ -103,22 +103,23 @@ function PriceChart({ points, kind }: { points: PricePoint[]; kind: "pig" | "pig
               formatter={(value) => [`${Number(value).toFixed(2)} 元/公斤`, isPig ? "生猪周均价" : "仔猪周均价"]}
               cursor={{ stroke: "#c9c0a9", strokeDasharray: "3 3" }}
             />
-            {isPig ? (
-              <>
-                <ReferenceLine
-                  y={12.5}
-                  stroke="#b3402a"
-                  strokeDasharray="5 4"
-                  label={{ value: "反转确认线 12.5", position: "insideTopRight", fill: "#b3402a", fontSize: 10 }}
-                />
-                <ReferenceLine
-                  y={11.6}
-                  stroke="#1f5c4d"
-                  strokeDasharray="3 4"
-                  label={{ value: "牧原完全成本 11.6", position: "insideBottomRight", fill: "#1f5c4d", fontSize: 10 }}
-                />
-              </>
-            ) : (
+            {isPig && (
+              <ReferenceLine
+                y={12.5}
+                stroke="#b3402a"
+                strokeDasharray="5 4"
+                label={{ value: "反转确认线 12.5", position: "insideTopRight", fill: "#b3402a", fontSize: 10 }}
+              />
+            )}
+            {isPig && (
+              <ReferenceLine
+                y={11.6}
+                stroke="#1f5c4d"
+                strokeDasharray="3 4"
+                label={{ value: "牧原完全成本 11.6", position: "insideBottomRight", fill: "#1f5c4d", fontSize: 10 }}
+              />
+            )}
+            {!isPig && (
               <ReferenceLine
                 y={high}
                 stroke="#b45309"
